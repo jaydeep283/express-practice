@@ -13,6 +13,14 @@ usersRouter.get(
     "/api/users",
     checkSchema(queryParamsValidationSchema),
     (req, res) => {
+        console.log(req.session.id);
+        req.sessionStore.get(req.session.id, (err, sessionData) => {
+            if (err) {
+                console.log(err);
+                throw err;
+            }
+            console.log(sessionData);
+        });
         // const {
         //     query: { filter, value },
         // } = req;
