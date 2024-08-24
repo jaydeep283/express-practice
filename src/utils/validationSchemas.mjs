@@ -19,6 +19,18 @@ export const createUserValidationSchema = {
             errorMessage: "Must not be empty",
         },
     },
+    password: {
+        notEmpty: {
+            errorMessage: "Must not be empty",
+        },
+        isLength: {
+            options: {
+                min: 5,
+                max: 32,
+            },
+            errorMessage: "Length must be between 5 and 32",
+        },
+    },
 };
 
 export const queryParamsValidationSchema = {

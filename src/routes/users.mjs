@@ -6,6 +6,9 @@ import {
     createUserValidationSchema,
 } from "../utils/validationSchemas.mjs";
 import { resolveIndexByUserId } from "../utils/middlewares.mjs";
+import session from "express-session";
+import { User } from "../mongoose/schemas/user.mjs";
+import { hashPassword } from "../utils/helpers.mjs";
 
 const usersRouter = Router();
 
@@ -13,7 +16,9 @@ usersRouter.get(
     "/api/users",
     checkSchema(queryParamsValidationSchema),
     (req, res) => {
+        // console.log(req.session);
         console.log(req.session.id);
+        console.log(`Inside Session Store -`);
         req.sessionStore.get(req.session.id, (err, sessionData) => {
             if (err) {
                 console.log(err);
@@ -26,8 +31,8 @@ usersRouter.get(
         // } = req;
         const result = validationResult(req);
         const data = matchedData(req);
-        console.log(data);
-        console.log(result);
+        // console.log(data);
+        // console.log(result);
         const { filter, value } = data;
         if (filter && value) {
             res.send(mockUsers.filter((user) => user[filter].includes(value)));
@@ -40,20 +45,32 @@ usersRouter.get(
 usersRouter.post(
     "/api/users",
     checkSchema(createUserValidationSchema),
-    (req, res) => {
+    async (req, res) => {
         const result = validationResult(req);
-        console.log(result);
+        // console.log(result);
         if (!result.isEmpty()) {
             return res.status(400).send({ errors: result.array() });
         }
         const validData = matchedData(req);
         // const { body } = req;
-        const newUser = {
-            id: mockUsers[mockUsers.length - 1].id + 1,
-            ...validData,
-        };
-        mockUsers.push(newUser);
-        res.status(201).send(newUser);
+        // const newUser = {
+        //     id: mockUsers[mockUsers.length - 1].id + 1,
+        //     ...validData,
+        // };
+        // mockUsers.push(newUser);
+        // res.status(201).send(newUser);
+
+        // Hashing the password before creating the new user
+        validData.password = hashPassword(validData.password);
+
+        const newUser = new User(validData);
+        try {
+            const savedUser = await newUser.save();
+            return res.status(201).send(savedUser);
+        } catch (error) {
+            console.log(error);
+            return res.sendStatus(400);
+        }
     }
 );
 
