@@ -2,12 +2,13 @@ import express, { application } from "express";
 import routes from "./routes/index.mjs";
 import cookieParser from "cookie-parser";
 import session from "express-session";
-import passport from "passport";
+import passport, { Passport } from "passport";
 import mongoose from "mongoose";
 import MongoStore from "connect-mongo";
 import { User } from "./mongoose/schemas/user.mjs";
 import { mockUsers } from "./utils/constants.mjs";
-import "./strategies/local-strategy.mjs";
+// import "./strategies/local-strategy.mjs";
+import "./strategies/x-strategy.mjs";
 
 const PORT = process.env.PORT || 8080;
 
@@ -29,7 +30,7 @@ app.use(
         saveUninitialized: false,
         resave: false,
         cookie: {
-            maxAge: 60000 * 60,
+            maxAge: 60000 * 5,
         },
         store: MongoStore.create({
             client: mongoose.connection.getClient(),
@@ -108,6 +109,16 @@ app.get("/api/cart", (req, res) => {
     if (!req.session.user) return res.status(401);
     return res.status(200).send(req.session.cart ?? []);
 });
+
+// OAUTH with Twitter/X
+app.get("/api/auth/x", passport.authenticate("twitter"));
+app.get(
+    "/api/auth/x/callback",
+    passport.authenticate("twitter"),
+    (req, res) => {
+        res.sendStatus(200);
+    }
+);
 
 // Routes
 app.use(routes);
